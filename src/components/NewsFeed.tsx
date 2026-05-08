@@ -87,7 +87,7 @@ export const NewsFeed = () => {
                     filteredNews.map((article, i) => {
                         const isExpanded = expandedNews.includes(i);
                         return (
-                            <div key={i} className={`border ${isExpanded ? 'border-red-300 dark:border-red-500/50 bg-red-50/10' : 'border-gray-200 dark:border-gray-800'} rounded-lg p-2 transition-all relative`}>
+                            <div key={i} className={`flex-shrink-0 overflow-hidden border ${isExpanded ? 'border-red-300 dark:border-red-500/50 bg-red-50/10' : 'border-gray-200 dark:border-gray-800'} rounded-lg p-2 transition-all relative`}>
                                 <div className="flex gap-4 cursor-pointer" onClick={() => toggleExpand(i)}>
                                     <div className="relative w-16 h-16 sm:w-24 sm:h-20 bg-gray-100 dark:bg-gray-800 rounded flex-shrink-0">
                                         <img 
@@ -105,7 +105,7 @@ export const NewsFeed = () => {
                                             <div className="flex gap-2 items-center flex-wrap">
                                                 <span className="font-bold text-blue-500 uppercase tracking-wide">{article.source}</span>
                                                 <span className="text-gray-500">
-                                                    {article.date ? format(new Date(article.date), 'dd/MM/yyyy, HH:mm:ss') : 'UNKNOWN'}
+                                                    {article.date && !isNaN(new Date(article.date).getTime()) ? format(new Date(article.date), 'dd/MMM/yyyy, HH:mm') : 'UNKNOWN'}
                                                 </span>
                                             </div>
                                         </div>

@@ -38,7 +38,7 @@ export const IssSpeedChart = ({ theme }: { theme?: string }) => {
                         tickFormatter={(val) => `${val.toLocaleString()}`} 
                         width={50} 
                         className="mono" 
-                        domain={['dataMin - 100', 'dataMax + 100']} 
+                        domain={['auto', 'auto']} 
                     />
                     <Tooltip 
                         contentStyle={{ 

@@ -30,28 +30,31 @@ function App() {
   // ISS Polling
   useEffect(() => {
     let mounted = true;
-    let timeoutId: number;
 
     const pollISS = async () => {
       if (isAutoRefresh || initialLoading) {
-        const pos = await fetchISSPosition(currentIss || undefined);
+        // Use getState to get latest without adding to dependency array
+        const latestIss = useDashboardStore.getState().currentIss;
+        const pos = await fetchISSPosition(latestIss || undefined);
         if (mounted && pos) {
           addIssPosition(pos);
           if (initialLoading) setInitialLoading(false);
         }
       }
-      if (mounted) {
-        timeoutId = window.setTimeout(pollISS, 15000);
-      }
     };
 
     pollISS();
+    
+    // Auto Refresh Every 15 Seconds
+    const interval = setInterval(() => {
+      pollISS();
+    }, 15000);
 
     return () => {
       mounted = false;
-      window.clearTimeout(timeoutId);
+      clearInterval(interval);
     };
-  }, [isAutoRefresh, currentIss?.timestamp, initialLoading]);
+  }, [isAutoRefresh, initialLoading, addIssPosition]);
 
   const handleRefreshNow = async () => {
     const pos = await fetchISSPosition(currentIss || undefined);

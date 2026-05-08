@@ -3,20 +3,19 @@ import { useDashboardStore } from '@/src/store/useDashboardStore';
 
 export const fetchISSPosition = async (lastPos?: { lat: number, lon: number, timestamp: number }) => {
   try {
-    const res = await fetch('https://api.wheretheiss.at/v1/satellites/25544');
-    if (res.status === 429) {
-        console.warn("Wheretheiss rate limited, throttling.");
-        return null;
-    }
+    const res = await fetch('/api/iss-position');
     if (!res.ok) throw new Error('Network response was not ok');
     const data = await res.json();
     
-    if (data) {
-      const lat = data.latitude;
-      const lon = data.longitude;
+    if (data && data.message === 'success') {
+      const lat = parseFloat(data.iss_position.latitude);
+      const lon = parseFloat(data.iss_position.longitude);
       const timestamp = data.timestamp;
 
-      let speed = data.velocity; // wheretheiss gives velocity directly in km/h
+      let speed = 27600; // default approximate speed
+      if (lastPos && lastPos.timestamp < timestamp) {
+        speed = calculateSpeed(lastPos.lat, lastPos.lon, lat, lon, timestamp - lastPos.timestamp);
+      }
 
       // Try to get location name using free nominatim API
       let locationName = 'Over Ocean';
@@ -46,7 +45,7 @@ export const fetchISSPosition = async (lastPos?: { lat: number, lon: number, tim
 
 export const fetchAstronauts = async () => {
     try {
-        const res = await fetch('https://corsproxy.io/?' + encodeURIComponent('http://api.open-notify.org/astros.json'));
+        const res = await fetch('/api/astronauts');
         const data = await res.json();
         if (data.message === 'success') {
             return data.people; // { name, craft }

@@ -14,7 +14,7 @@ export const fetchNews = async (): Promise<NewsArticle[]> => {
 
 // No API key required for Spaceflight News API
   try {
-    let res = await fetch(`https://api.spaceflightnewsapi.net/v4/articles/?limit=10`);
+    let res = await fetch(`/api/news`);
 
     if (!res.ok) throw new Error('Failed to fetch from news providers');
     const data = await res.json();
