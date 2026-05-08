@@ -4,7 +4,7 @@ import { useDashboardStore } from '@/src/store/useDashboardStore';
 export const fetchISSPosition = async (lastPos?: { lat: number, lon: number, timestamp: number }) => {
   try {
     const res = await fetch('/api/iss-position');
-    if (!res.ok) throw new Error('Network response was not ok');
+    if (!res.ok) return null;
     const data = await res.json();
     
     if (data && data.message === 'success') {
@@ -22,19 +22,19 @@ export const fetchISSPosition = async (lastPos?: { lat: number, lon: number, tim
       try {
         const geoRes = await fetch(`/api/reverse-geocode?lat=${lat}&lon=${lon}`);
         if (geoRes.ok) {
-          const geoData = await geoRes.json();
-          if (geoData && geoData.address) {
-            locationName = geoData.address.country || geoData.address.ocean || geoData.name || 'Over Ocean';
-          }
+           const geoData = await geoRes.json();
+           if (geoData && geoData.address) {
+             locationName = geoData.address.country || geoData.address.ocean || geoData.name || 'Over Ocean';
+           }
         }
       } catch (err) {
-        console.error('Failed to reverse geocode', err);
+        // Silent catch for geocode
       }
 
       return { lat, lon, timestamp, speed, locationName };
     }
   } catch (error) {
-    console.error('Failed to fetch ISS position', error);
+    // Silent catch if proxy server is unavailable
   }
   return null;
 };
@@ -42,12 +42,13 @@ export const fetchISSPosition = async (lastPos?: { lat: number, lon: number, tim
 export const fetchAstronauts = async () => {
     try {
         const res = await fetch('/api/astronauts');
+        if (!res.ok) return [];
         const data = await res.json();
         if (data.message === 'success') {
             return data.people; // { name, craft }
         }
     } catch (err) {
-        console.error('Failed to fetch astronauts', err);
+        // Silent catch
     }
     return [];
 }

@@ -43,7 +43,7 @@ export const fetchNews = async (): Promise<NewsArticle[]> => {
 
     return articles.slice(0, 10);
   } catch (error) {
-    console.error('Failed to fetch news:', error);
+    // Silent catch, fallback to placeholder news
     return getPlaceholderNews();
   }
 };
