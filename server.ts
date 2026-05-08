@@ -9,15 +9,35 @@ async function startServer() {
   // Add JSON parsing
   app.use(express.json());
 
-  // Proxy ISS position
+  // Proxy ISS position with fallback
   app.get("/api/iss-position", async (req, res) => {
     try {
-      const response = await fetch("http://api.open-notify.org/iss-now.json");
-      if (!response.ok) throw new Error("Failed to fetch ISS position");
-      const data = await response.json();
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 3000);
+      let data;
+      try {
+        const response = await fetch("http://api.open-notify.org/iss-now.json", { signal: controller.signal });
+        clearTimeout(timeout);
+        if (!response.ok) throw new Error("open-notify not ok");
+        data = await response.json();
+      } catch (err) {
+        clearTimeout(timeout);
+        // Fallback to wheretheiss
+        const fallbackRes = await fetch("https://api.wheretheiss.at/v1/satellites/25544");
+        if (!fallbackRes.ok) throw new Error("Fallback wheretheiss failed");
+        const fallbackData = await fallbackRes.json();
+        data = {
+          message: "success",
+          timestamp: fallbackData.timestamp,
+          iss_position: {
+            latitude: fallbackData.latitude.toString(),
+            longitude: fallbackData.longitude.toString()
+          }
+        };
+      }
       res.json(data);
     } catch (error: any) {
-      console.error(error);
+      console.error("ISS Position proxy error:", error);
       res.status(500).json({ error: error.message });
     }
   });
@@ -30,7 +50,7 @@ async function startServer() {
       const data = await response.json();
       res.json(data);
     } catch (error: any) {
-      console.error(error);
+      console.error("Astronauts proxy error:", error);
       res.status(500).json({ error: error.message });
     }
   });
@@ -43,7 +63,27 @@ async function startServer() {
       const data = await response.json();
       res.json(data);
     } catch (error: any) {
-      console.error(error);
+      console.error("News proxy error:", error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Proxy Reverse Geocode
+  app.get("/api/reverse-geocode", async (req, res) => {
+    try {
+      const { lat, lon } = req.query;
+      if (!lat || !lon) return res.status(400).json({ error: "Missing lat/lon" });
+      const response = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&zoom=3`, {
+        headers: {
+          "User-Agent": "SpaceDashApp/1.0",
+          "Accept-Language": "en"
+        }
+      });
+      if (!response.ok) throw new Error("Nominatim fetch failed");
+      const data = await response.json();
+      res.json(data);
+    } catch (error: any) {
+      console.error("Reverse geocode proxy error:", error);
       res.status(500).json({ error: error.message });
     }
   });
@@ -56,7 +96,6 @@ async function startServer() {
     });
     app.use(vite.middlewares);
   } else {
-    // Note: Use __dirname fallback since "type": "module" disables __dirname
     const currentDir = process.cwd();
     const distPath = path.join(currentDir, 'dist');
     app.use(express.static(distPath));

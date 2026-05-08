@@ -17,17 +17,13 @@ export const fetchISSPosition = async (lastPos?: { lat: number, lon: number, tim
         speed = calculateSpeed(lastPos.lat, lastPos.lon, lat, lon, timestamp - lastPos.timestamp);
       }
 
-      // Try to get location name using free nominatim API
+      // Try to get location name using free nominatim API via our proxy
       let locationName = 'Over Ocean';
       try {
-        const geoRes = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&zoom=3`, {
-            headers: {
-                'Accept-Language': 'en'
-            }
-        });
+        const geoRes = await fetch(`/api/reverse-geocode?lat=${lat}&lon=${lon}`);
         if (geoRes.ok) {
           const geoData = await geoRes.json();
-          if (geoData.address) {
+          if (geoData && geoData.address) {
             locationName = geoData.address.country || geoData.address.ocean || geoData.name || 'Over Ocean';
           }
         }
